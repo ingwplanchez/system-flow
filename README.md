@@ -2,36 +2,58 @@
 
 **SystemFlow** es una plataforma de análisis de productividad diseñada para medir y optimizar el tiempo de trabajo profundo (*deep work*). El sistema registra sesiones de trabajo, calcula métricas de enfoque mediante lógica de negocio personalizada y visualiza tendencias mediante análisis de datos en tiempo real.
 
-## Stack Tecnológico
-* **Backend:** FastAPI (Python) para la gestión de APIs y persistencia de datos.
-* **Frontend:** Streamlit para la visualización de datos y el dashboard interactivo.
-* **Data Science:** Pandas para el procesamiento, limpieza y análisis de tendencias de productividad.
-* **Base de Datos:** SQLite (para despliegue local sencillo).
+## 🛠️ Stack Tecnológico
+- **Frontend:** Streamlit para la visualización de datos y el dashboard interactivo.
+- **Backend:** FastAPI (Python) para la gestión de APIs y persistencia de datos (en desarrollo).
+- **Data Science:** Pandas y Plotly para el procesamiento, limpieza y análisis de tendencias.
+- **Base de Datos:** SQLite para despliegue local sencillo.
 
----
+## 📂 Estructura del Proyecto
+La aplicación sigue una arquitectura modular basada en la separación de responsabilidades:
 
-## 🚀 Siguientes Pasos Técnicos
-Para mantener el *momentum* y asegurar una arquitectura escalable, dividiremos el desarrollo en los siguientes sprints:
+```text
+systemflow/
+├── app.py              # Punto de entrada principal de la aplicación
+├── core/               # Lógica de negocio y procesamiento de datos
+│   ├── state.py        # Gestión del estado de la sesión (st.session_state)
+│   └── etl.py          # Pipeline de limpieza y normalización de datos (Esquema ETL)
+├── ui/                 # Diseño y presentación de la interfaz
+│   ├── styles.py       # Definiciones de CSS y estilos visuales
+│   └── layout.py       # Estructura de la página, sidebar y componentes del dashboard
+├── backend/            # API REST y persistencia de datos (Sprints futuros)
+├── data_analysis/      # Motor de cálculo de métricas y Focus Score (Sprints futuros)
+└── requirements.txt    # Dependencias del proyecto
+```
 
-### Sprint 1: Backend
-* Creación de los modelos de datos (`models.py`) para las entidades de `Proyectos` y `Tareas`.
-* Implementación de los endpoints principales en FastAPI (ej: `POST /proyectos/`, `POST /tareas/`).
+## 🚀 Ejecución Local
+Para ejecutar la aplicación en modo desarrollo:
 
-### Sprint 2: Data & Logic
-* Desarrollo de `metrics.py`: Script de procesamiento que importe los datos y calcule la "Puntuación de Enfoque" basándose en tu lógica de negocio (sesiones completadas vs. tiempo real vs. dificultad).
+1. **Instalar dependencias**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+2. **Lanzar el Dashboard**:
+   ```bash
+   streamlit run app.py
+   ```
 
-### Sprint 3: Integración Frontend
-* Conexión del dashboard de Streamlit con la API de FastAPI mediante `requests` o `httpx`.
-* Migración de `st.session_state` a persistencia real mediante peticiones HTTP.
+## 📅 Hoja de Ruta (Roadmap)
+El desarrollo está dividido en sprints técnicos para asegurar la escalabilidad:
 
----
+### Sprint 1: Backend & Persistencia
+- Implementación de FastAPI para reemplazar el almacenamiento en memoria.
+- Definición de modelos de datos (Proyectos, Tareas) con SQLAlchemy.
+- Creación de endpoints CRUD para el registro persistente de sesiones.
 
-## 🛠️ ¿Cómo quieres continuar?
+### Sprint 2: Lógica de Análisis
+- Desarrollo del motor de cálculo de la "Puntuación de Enfoque" (*Focus Score*).
+- Agregaciones temporales avanzadas para detección de picos de productividad.
 
-Podemos tomar dos caminos para avanzar ahora mismo:
+### Sprint 3: Integración Final
+- Conexión total del frontend con la API mediante clientes HTTP.
+- Implementación de visualizaciones avanzadas del Focus Score.
 
-* **[Opción A] Backend:** Empezamos a redactar la estructura del proyecto en FastAPI y definimos los modelos de datos para registrar las tareas y proyectos de forma persistente.
-* **[Opción B] Análisis:** Definimos la lógica matemática detallada de tu "Puntuación de Enfoque" y creamos el script de Pandas para que el sistema tenga un "cerebro" analítico desde el primer día.
-
----
-*Desarrollado por Wilmer Planchez - Ingeniero Mecatrónico | Especialista en Automatización e IA.*
+## 🛠️ Especificaciones Técnicas Obligatorias
+- **Ingesta de Datos**: Cualquier importación de CSV debe seguir estrictamente el `DATA_SCHEMA.md`.
+- **Colores de Interfaz**: Uso de paleta Dark Mode con acentos en Verde Neón (`#00FFA3`) para acciones positivas y Rojo (`#FF4B4B`) para detenciones.
+- **Sincronización**: El cronómetro de enfoque debe alimentar automáticamente la duración de las tareas registradas.
