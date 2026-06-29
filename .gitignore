@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.class
+venv/
+.env
+.venv
+
+# Streamlit
+.streamlit/config.toml
+
+# IDEs
+.vscode/
+.idea/
+
+# Claude Code
+.claude/
+
+# Databases
+*.db
+*.sqlite
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,28 @@
+Contexto/Rol:
+Actúas como un Ingeniero Principal de Software y Experto en Arquitectura de Sistemas AI. Tu objetivo es diseñar e implementar una aplicación web de nivel de producción para un Dashboard de Productividad y Analítica de Tiempo Avanzada, optimizado para flujos de trabajo automatizados y edición por agentes de IA CLI (como Claude Code o herramientas basadas en Antigravity).
+
+Objetivos del Sistema:
+Desarrollar una solución modular y desacoplada dividida estrictamente en capas: una API REST de alto rendimiento en el Backend, una interfaz de usuario interactiva y moderna de tipo SaaS Premium en el Frontend, y un motor analítico aislado para el procesamiento estadístico de datos de rendimiento.
+
+Requisitos Técnicos:
+1. Arquitectura de Directorios Desacoplada:
+   - `backend/`: Implementación de una API REST con FastAPI. Configuración de persistencia de datos relacionales mediante SQLAlchemy/SQLite (`database.py`, `models.py`), validación estricta de esquemas y DTOs con Pydantic (`schemas.py`), e implementación de operaciones atómicas mediante patrones de abstracción e interfaces en la capa de datos (`crud.py`).
+   - `frontend/`: Interfaz construida con Streamlit (`app.py`), aplicando customización visual avanzada inyectando hojas de estilo controladas (`styles.css`) y desacoplando el consumo del cliente HTTP en un módulo de utilidades (`utils.py`).
+   - `data_analysis/`: Capa aislada para el cómputo puro y transformaciones matriciales con Pandas y visualizaciones interactivas vectorizadas (`metrics.py`).
+
+2. Lógica de Negocio y Motor Analítico (`data_analysis/metrics.py`):
+   - Diseñar un algoritmo robusto e imperativo para la optimización de complejidad temporal y espacial $O(N)$ que calcule la "Puntuación de Enfoque Diaria" basándose en variables ponderadas (bloques de trabajo profundo, tareas completadas vs estimadas y penalizaciones por interrupciones).
+   - Implementar agregaciones temporales con Pandas para determinar el índice de eficiencia segmentado por día de la semana y densidad horaria (mañana, tarde, noche), asegurando el tipado estático riguroso mediante Type Hints de Python en firmas de funciones.
+
+3. Interfaz de Usuario e Interactividad (`frontend/app.py`):
+   - Layout modular: Barra lateral para filtrado de proyectos globales y un componente reactivo para el control de cronometraje/sesión de enfoque en tiempo real que despache payloads asíncronos hacia la API del backend.
+   - Panel Principal: Encabezado dinámico basado en estados, fila de tarjetas KPI con renderizado condicional según rendimiento y componentes interactivos basados en Plotly o Altair (`st.plotly_chart`) para mapas de calor horarios y diagramas de barras de eficiencia.
+
+Restricciones y Calidad de Código:
+- Aplicar tipado estático estricto (Type Hints) en la totalidad del código fuente.
+- Implementar manejo exhaustivo de excepciones y logging estructural en las capas de transporte de la API y de persistencia.
+- Modularidad estricta y bajo acoplamiento para facilitar refactorizaciones y edición automatizada por CLI.
+- Incluir un archivo de orquestación de contenedores `docker-compose.yml` para el aprovisionamiento automatizado y reproducible del ecosistema completo (FastAPI en puerto 8000 y Streamlit en puerto 8501).
+
+Formato de Salida:
+Genera exclusivamente la estructura de archivos, el andamiaje técnico y la lógica central de producción requerida sin explicaciones narrativas intermedias.
