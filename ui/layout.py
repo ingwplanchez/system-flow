@@ -29,7 +29,6 @@ def render_sidebar():
             st.info(f"⏳ Sesión activa: {elapsed.total_seconds() // 60:.0f} min")
             if st.button("🛑 Finalizar Sesión", use_container_width=True, type="secondary"):
                 real_h = elapsed.total_seconds() / 3600
-                # Usar el proyecto seleccionado actualmente o el primero de la lista
                 proyecto_actual = st.session_state.get('proyecto_seleccionado', st.session_state['proyectos'][1])
 
                 nueva_fila = {
@@ -137,11 +136,49 @@ def render_dashboard(proyecto_seleccionado):
                 dias_map = {'Monday': 'Lunes', 'Tuesday': 'Martes', 'Wednesday': 'Miércoles', 'Thursday': 'Jueves', 'Friday': 'Viernes', 'Saturday': 'Sábado', 'Sunday': 'Domingo'}
                 df_completed['Día'] = df_completed['fecha_dt'].dt.day_name().map(dias_map)
                 dias_orden = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
-                day_counts = df_completed['Día'].value_counts().reindex(dias_orden).fillna(0).reset_index()
-                day_counts.columns = ['Día', 'Ciclos']
-                fig_day = px.bar(day_counts, x='Ciclos', y='Día', orientation='h', color_discrete_sequence=['#00FFA3'], title="<b>¿En qué día soy más eficiente?</b> (Ciclos Completados)", template="plotly_dark")
-                fig_day.update_layout(yaxis=dict(autorange="reversed"), plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font_color="#CBD5E1")
+
+                # Lógica de Color por Dificultad
+                day_stats = df_completed.groupby('Día').agg(
+                    ciclos=('task_id', 'count'),
+                    dificultad_avg=('difficulty', 'mean')
+                ).reindex(dias_orden).fillna(0).reset_index()
+
+                def assign_color(val):
+                    if val <= 2: return '#1B4332' # Verde oscuro
+                    if val <= 3.5: return '#00FFA3' # Verde Neón
+                    return '#FACC15' # Ambar Eléctrico para alta dificultad
+
+                day_stats['color'] = day_stats['dificultad_avg'].apply(assign_color)
+
+                fig_day = px.bar(
+                    day_stats,
+                    x='ciclos',
+                    y='Día',
+                    orientation='h',
+                    color='color',
+                    color_discrete_map='identity',
+                    title="<b>¿En qué día soy más eficiente?</b> (Ciclos vs Intensidad)",
+                    template="plotly_dark",
+                    labels={'ciclos': 'Ciclos Completados', 'Día': ''}
+                )
+                fig_day.update_layout(
+                    yaxis=dict(
+                        autorange="reversed",
+                        categoryorder="array",
+                        categoryarray=dias_orden
+                    ),
+                    xaxis=dict(
+                        tickmode='linear',
+                        tick0=0,
+                        dtick=1
+                    ),
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    font_color="#CBD5E1",
+                    showlegend=False
+                )
                 st.plotly_chart(fig_day, use_container_width=True)
+                st.caption("💡 El color de la barra indica la dificultad promedio de las tareas: Verde Oscuro (Baja) → Verde Neón (Media) → Ambar Eléctrico (Alta)")
             else:
                 st.warning("No hay tareas marcadas como 'completed' para mostrar el gráfico de eficiencia.")
 
