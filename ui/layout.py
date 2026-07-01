@@ -109,11 +109,28 @@ def render_dashboard(proyecto_seleccionado):
     df_master = st.session_state['df_tareas']
     df_filtrado = df_master if proyecto_seleccionado == "Todos los Proyectos" else df_master[df_master['project'] == proyecto_seleccionado]
 
+    # --- Cálculos Dinámicos de KPIs ---
+    df_completed = df_filtrado[df_filtrado['status'].str.lower().str.strip() == 'completed'].copy()
+
+    # 1. Focus Score (Precisión de Estimación)
+    if not df_completed.empty:
+        diff_ratio = (df_completed['est_hours'] - df_completed['real_hours']).abs() / df_completed['est_hours'].replace(0, float('nan'))
+        avg_diff = diff_ratio.mean()
+        focus_score = max(0, int(100 * (1 - (avg_diff if not pd.isna(avg_diff) else 0))))
+    else:
+        focus_score = 0
+
+    # 2. Ciclos Completados (Hoy)
+    today_str = datetime.date.today().strftime("%Y-%m-%d")
+    df_today = df_completed[df_completed['timestamp'].str.startswith(today_str)]
+    ciclos_hoy = len(df_today)
+    meta_diaria = st.session_state.get('daily_goal', 6)
+
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        st.metric(label="Puntuación de Enfoque", value="88 / 100", delta="+5% esta semana")
+        st.metric(label="Puntuación de Enfoque", value=f"{focus_score} / 100", delta="+5% esta semana")
     with col2:
-        st.metric(label="Ciclos Completados (Hoy)", value="4 / 6", delta="Meta: 6")
+        st.metric(label="Ciclos Completados (Hoy)", value=f"{ciclos_hoy} / {meta_diaria}", delta=f"Meta: {meta_diaria}")
     with col3:
         st.metric(label="Tiempo Total Enfocado", value=f"{df_filtrado['real_hours'].sum():.1f} hrs", delta=None)
     with col4:
