@@ -21,15 +21,27 @@ st.markdown(get_styles(), unsafe_allow_html=True)
 init_session_state()
 
 # --- Sincronización Inicial con Backend ---
-def sync_with_backend():
+def sync_with_backend(force=False):
     """Sincroniza el estado de Streamlit con los datos persistentes del Backend."""
+    # Evitamos resincronizar todo en cada rerun a menos que sea forzado o la primera vez
+    if not force and st.session_state.get('initialized', False):
+        # Aún así, recuperamos la sesión activa para mantener el timer vivo
+        active_session = api.get_active_session()
+        if active_session:
+            st.session_state['session_active'] = True
+            st.session_state['session_start_time'] = datetime.fromisoformat(active_session['started_at'].replace('Z', '+00:00'))
+            st.session_state['active_session_id'] = active_session['id']
+        else:
+            st.session_state['session_active'] = False
+            st.session_state['session_start_time'] = None
+            st.session_state['active_session_id'] = None
+        return
+
     try:
         # 1. Sincronizar Proyectos
         proyectos_api = api.get_projects()
         if proyectos_api:
-            # Convertimos la lista de dicts a una lista de nombres
             nombres = [p['name'] for p in proyectos_api]
-            # Mantenemos la opción de filtro global al principio
             st.session_state['proyectos'] = ["Todos los Proyectos"] + nombres
         else:
             st.session_state['proyectos'] = ["Todos los Proyectos"]
@@ -39,27 +51,29 @@ def sync_with_backend():
         if settings:
             st.session_state['daily_goal'] = settings.get('daily_goal', 4)
 
-        # 3. Recuperar Sesión de Enfoque Activa (Recovery)
+        # 3. Recuperar Sesión de Enfoque Activa
         active_session = api.get_active_session()
         if active_session:
             st.session_state['session_active'] = True
-            # El backend devuelve started_at en ISO string, lo convertimos a datetime
             st.session_state['session_start_time'] = datetime.fromisoformat(active_session['started_at'].replace('Z', '+00:00'))
-            # Guardamos el ID de la sesión para poder detenerla luego
             st.session_state['active_session_id'] = active_session['id']
+        else:
+            st.session_state['session_active'] = False
+            st.session_state['session_start_time'] = None
+            st.session_state['active_session_id'] = None
 
-        # 4. Cargar Tareas Iniciales (Cache local para el Dashboard)
+        # 4. Cargar Tareas Iniciales
         tasks_api = api.get_tasks()
         if tasks_api:
             st.session_state['df_tareas'] = pd.DataFrame(tasks_api)
         else:
-            # Creamos un DataFrame vacío con las columnas correctas para evitar KeyErrors
             st.session_state['df_tareas'] = pd.DataFrame(columns=['project', 'real_hours', 'status', 'timestamp', 'task_id'])
+
+        st.session_state['initialized'] = True
 
     except Exception as e:
         st.error(f"⚠️ Error de conexión con el servidor: {e}")
         st.info("Asegúrate de que el backend esté corriendo con: `uvicorn backend.main:app --reload` en otra terminal.")
-        # Inicializar con valores básicos para evitar crashes
         st.session_state['proyectos'] = ["Todos los Proyectos"]
         st.session_state['df_tareas'] = pd.DataFrame(columns=['project', 'real_hours', 'status', 'timestamp', 'task_id'])
 

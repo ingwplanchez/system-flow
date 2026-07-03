@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List, Optional, Any
 from ..database import get_db
 from .. import crud, schemas
 
 router = APIRouter()
 
-@router.get("/", response_model=List[schemas.Task])
+@router.get("/", response_model=List[Any])
 def read_tasks(
     project_id: Optional[int] = None,
     status: Optional[str] = None,

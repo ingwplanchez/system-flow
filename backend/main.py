@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
+from . import models  # Import models explicitly to register them with Base
 from .api import projects, tasks, focus, settings
 
 # Initialize Database Tables

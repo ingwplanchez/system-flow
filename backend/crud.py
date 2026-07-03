@@ -48,7 +48,9 @@ def get_tasks(db: Session, project_id: Optional[int] = None, status: Optional[st
             "real_hours": task.real_hours,
             "difficulty": task.difficulty,
             "status": task.status.value if hasattr(task.status, 'value') else task.status,
-            "module_task": task.module_task
+            "module_task": task.module_task,
+            "created_at": task.created_at,
+            "updated_at": task.updated_at
         }
         tasks_list.append(task_dict)
     return tasks_list

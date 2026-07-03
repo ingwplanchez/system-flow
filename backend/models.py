@@ -67,7 +67,10 @@ class Task(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     project: Mapped["Project"] = relationship(back_populates="tasks")
-    source_session: Mapped[Optional["FocusSession"]] = relationship(back_populates="tasks")
+    source_session: Mapped[Optional["FocusSession"]] = relationship(
+        back_populates="tasks",
+        foreign_keys="[Task.source_session_id]"
+    )
 
     __table_args__ = (
         UniqueConstraint("task_id", name="uq_tasks_task_id"),
@@ -91,7 +94,10 @@ class FocusSession(Base):
     task_id: Mapped[Optional[int]] = mapped_column(ForeignKey("tasks.id", ondelete="SET NULL"), nullable=True)
 
     project: Mapped["Project"] = relationship(back_populates="focus_sessions")
-    tasks:   Mapped[List["Task"]] = relationship(back_populates="source_session")
+    tasks:   Mapped[List["Task"]] = relationship(
+        back_populates="source_session",
+        foreign_keys="[Task.source_session_id]"
+    )
 
 class UserSettings(Base):
     __tablename__ = "user_settings"
