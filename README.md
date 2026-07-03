@@ -74,13 +74,7 @@ El desarrollo está dividido en sprints técnicos para asegurar la escalabilidad
 - Refinamiento de la UX basada en datos analíticos.
 
 ## 🛠️ Especificaciones Técnicas Obligatorias
-- **Ingesta de Datos**: Cualquier importación de CSV o carga masiva debe seguir estrictamente el `DATA_SCHEMA.md`.
-    - Formato de Fecha: ISO 8601 (`YYYY-MM-DD HH:MM:SS`).
-- **Colores de Interfaz**: Uso de paleta Dark Mode con acentos en Verde Neón (`#00FFA3`) para acciones positivas y Rojo (`#FF4B4B`) para detenciones.
-- **Sincronización**: El cronómetro de enfoque alimenta automáticamente la duración de las tareas registradas.
-- **Visualización de Datos**: 
-    - El análisis de eficiencia diaria utiliza un código de colores basado en la dificultad promedio: Verde Oscuro (Baja) $\rightarrow$ Verde Neón (Media) $\rightarrow$ Ambar Eléctrico (Alta).
-    - El Mapa de Calor de Productividad representa el **Volumen de Enfoque** (suma de `real_hours`) con una escala de color: Azul Pizarra (`#1E293B`) $\rightarrow$ Verde Bosque (`#065F46`) $\rightarrow$ Verde Neón (`#00FFA3`), utilizando celdas separadas (gaps) para un acabado profesional.
+
 - **Lógica de Indicadores (KPIs)**:
     - **Focus Score**: Cálculo basado en la precisión de estimación (Diferencia entre `est_hours` y `real_hours`).
     - **Ciclos Completados**: Conteo de tareas `completed` del día actual frente a una meta configurable en el Sidebar.
@@ -88,3 +82,19 @@ El desarrollo está dividido en sprints técnicos para asegurar la escalabilidad
     - **Eficiencia Promedio**: Ratio de rendimiento ($\frac{\sum \text{est\_hours}}{\sum \text{real\_hours}}$) capado al 120%.
 - **Configuraciones de Usuario**:
     - **Meta Diaria**: Control ajustable en la interfaz para definir el objetivo de bloques diarios (predeterminado: 4 bloques).
+
+    - **Visualización de Datos**: 
+        - El análisis de eficiencia diaria utiliza un código de colores basado en la dificultad promedio: Verde Oscuro (Baja) $\rightarrow$ Verde Neón (Media) $\rightarrow$ Ambar Eléctrico (Alta).
+        - El Mapa de Calor de Productividad es un motor de análisis dinámico que visualiza la intensidad del trabajo mediante:
+            - **Métricas Seleccionables**: Permite alternar entre *Volumen de Horas*, *Cantidad de Tareas* y *Carga Mental* (Horas $\times$ Dificultad).
+            - **Expansión Temporal**: Distribuye la duración de las tareas a lo largo de los bloques horarios, reflejando la ocupación real en lugar de solo el inicio de la tarea.
+            - **Detección de Bloques Pico**: Identifica y resalta el rango horario continuo de máxima productividad basándose en la intensidad acumulada.
+            - **Escalado Dinámico**: Ajusta automáticamente la barra de colores al valor máximo real y normaliza los ticks según la métrica (enteros para tareas, decimales para horas/carga).
+            - **Estética Profesional**: Utiliza una escala de color Azul Pizarra (`#1E293B`) $\rightarrow$ Verde Bosque (`#065F46`) $\rightarrow$ Verde Neón (`#00FFA3`) con celdas separadas (gaps).
+
+- **Exportación de Datos**: Cualquier exportación de CSV debe seguir estrictamente el `DATA_SCHEMA.md`.
+    - Formato de Fecha: ISO 8601 (`YYYY-MM-DD HH:MM:SS`).
+- **Colores de Interfaz**: Uso de paleta Dark Mode con acentos en Verde Neón (`#00FFA3`) para acciones positivas y Rojo (`#FF4B4B`) para detenciones.
+- **Sincronización**: El cronómetro de enfoque alimenta automáticamente la duración de las tareas registradas.
+
+

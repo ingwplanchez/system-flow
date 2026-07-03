@@ -290,57 +290,147 @@ def render_dashboard(proyecto_seleccionado):
                 st.warning("No hay tareas marcadas como 'completed' para mostrar el gráfico de eficiencia.")
 
             st.write("---")
-            # --- Implementación Mapa de Calor de Productividad (GitHub Style) ---
+            # --- Implementación Mapa de Calor de Productividad (Mejorado) ---
             st.subheader("Mapa de Calor de Intensidad Horaria")
 
-            df_trends['Hora'] = df_trends['fecha_dt'].dt.hour
-            # Definimos el mapa de días si no se definieron arriba debido a df_completed vacío
-            dias_map = {'Monday': 'Lunes', 'Tuesday': 'Martes', 'Wednesday': 'Miércoles', 'Thursday': 'Jueves', 'Friday': 'Viernes', 'Saturday': 'Sábado', 'Sunday': 'Domingo'}
-            dias_orden = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
-            df_trends['Día'] = df_trends['fecha_dt'].dt.day_name().map(dias_map)
+            # Controles de configuración del mapa
+            col_metric, col_status = st.columns(2)
+            with col_metric:
+                metric_choice = st.selectbox(
+                    "Métrica de Intensidad:",
+                    ["Volumen de Horas", "Cantidad de Tareas", "Carga Mental (Dificultad × Horas)"],
+                    key="heatmap_metric"
+                )
+            with col_status:
+                filter_completed = st.checkbox("Mostrar solo tareas completadas", value=False, key="heatmap_filter_completed")
 
-            # Crear matriz de volumen: Filas = Días, Columnas = Horas (Suma de real_hours)
-            heatmap_data = df_trends.groupby(['Día', 'Hora'])['real_hours'].sum().unstack(fill_value=0)
-            heatmap_data = heatmap_data.reindex(dias_orden).fillna(0)
+            # Preparación de datos para el heatmap
+            df_hm = df_trends.copy()
+            if filter_completed:
+                df_hm = df_hm[df_hm['status'].str.lower().str.strip() == 'completed']
 
-            # Asegurar que todas las horas (0-23) estén presentes
-            for h in range(24):
-                if h not in heatmap_data.columns:
-                    heatmap_data[h] = 0
-            heatmap_data = heatmap_data.sort_index(axis=1)
+            if df_hm.empty:
+                st.warning("No hay datos disponibles con los filtros seleccionados para generar el mapa.")
+            else:
+                # --- Expansión Temporal de Tareas ---
+                # En lugar de marcar solo la hora de inicio, expandimos la tarea a todas las horas que abarcó
+                expanded_data = []
+                for _, row in df_hm.iterrows():
+                    start = row['fecha_dt']
+                    duration = row['real_hours']
 
-            fig_heatmap = px.imshow(
-                heatmap_data,
-                labels=dict(x="Hora del Día", y="Día de la Semana", color="Horas"),
-                x=heatmap_data.columns,
-                y=heatmap_data.index,
-                color_continuous_scale=[[0, '#1E293B'], [0.5, '#065F46'], [1, '#00FFA3']],
-                title="<b>Mapa de Calor de Productividad</b> (Volumen de Enfoque por Hora)",
-                template="plotly_dark"
-            )
+                    if pd.isna(duration) or duration <= 0:
+                        # Si no hay duración, marcamos solo el bloque de inicio con peso 0
+                        expanded_data.append({**row.to_dict(), 'fecha_dt': start, 'weight': 0.0})
+                        continue
 
-            # Crear el efecto de celdas separadas (estilo GitHub) mediante gaps
-            fig_heatmap.update_traces(xgap=3, ygap=3)
+                    # Calculamos cuántos bloques de hora abarca (ej: 2.5h -> 3 bloques)
+                    num_blocks = int(duration) + (1 if duration % 1 > 0 else 0)
+                    for i in range(num_blocks):
+                        block_time = start + pd.Timedelta(hours=i)
+                        # El peso es 1.0 para horas completas y el resto para la última hora
+                        weight = min(1.0, duration - i)
+                        expanded_data.append({**row.to_dict(), 'fecha_dt': block_time, 'weight': weight})
 
-            fig_heatmap.update_layout(
-                xaxis=dict(
-                    tickmode='linear',
-                    tick0=0,
-                    dtick=2,
-                    showgrid=False
-                ),
-                yaxis=dict(
-                    showgrid=False
-                ),
-                plot_bgcolor='rgba(0,0,0,0)',
-                paper_bgcolor='rgba(0,0,0,0)',
-                font_color="#CBD5E1",
-                xaxis_title="Hora (0-23h)",
-                yaxis_title=""
-            )
+                df_expanded = pd.DataFrame(expanded_data)
+                df_expanded['Hora'] = df_expanded['fecha_dt'].dt.hour
+                dias_map = {'Monday': 'Lunes', 'Tuesday': 'Martes', 'Wednesday': 'Miércoles', 'Thursday': 'Jueves', 'Friday': 'Viernes', 'Saturday': 'Sábado', 'Sunday': 'Domingo'}
+                dias_orden = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+                df_expanded['Día'] = df_expanded['fecha_dt'].dt.day_name().map(dias_map)
 
-            st.plotly_chart(fig_heatmap, use_container_width=True)
-            st.caption("💡 Las celdas más brillantes indican el mayor volumen de tiempo enfocado (Suma de horas reales).")
+                # Definición de métrica y agregación sobre el dataframe expandido
+                if metric_choice == "Volumen de Horas":
+                    # Sumamos el peso (fracción de hora) en cada celda
+                    heatmap_data = df_expanded.groupby(['Día', 'Hora'])['weight'].sum().unstack(fill_value=0)
+                    label_val = "horas"
+                elif metric_choice == "Cantidad de Tareas":
+                    # Contamos cuántas tareas distintas estuvieron activas en esa hora
+                    heatmap_data = df_expanded.groupby(['Día', 'Hora'])['task_id'].count().unstack(fill_value=0)
+                    label_val = "tareas"
+                else: # Carga Mental
+                    # Peso de la hora * dificultad
+                    df_expanded['focus_score'] = df_expanded['weight'] * df_expanded['difficulty']
+                    heatmap_data = df_expanded.groupby(['Día', 'Hora'])['focus_score'].sum().unstack(fill_value=0)
+                    label_val = "pts carga"
+
+                heatmap_data = heatmap_data.reindex(dias_orden).fillna(0)
+
+                # Asegurar que todas las horas (0-23) estén presentes
+                for h in range(24):
+                    if h not in heatmap_data.columns:
+                        heatmap_data[h] = 0
+                heatmap_data = heatmap_data.sort_index(axis=1)
+
+                # --- Análisis de Bloque Pico de Productividad ---
+                max_val = heatmap_data.max().max()
+                if max_val > 0:
+                    # Encontrar la primera celda con el valor máximo
+                    peak_idx = heatmap_data.stack().idxmax()
+                    peak_day, peak_hour = peak_idx
+
+                    # Expandir el rango: buscar horas contiguas con intensidad significativa (>= 60% del max)
+                    threshold = max_val * 0.6
+                    start_hour = peak_hour
+                    end_hour = peak_hour
+
+                    # Expandir hacia atrás
+                    while start_hour > 0 and heatmap_data.loc[peak_day, start_hour - 1] >= threshold:
+                        start_hour -= 1
+                    # Expandir hacia adelante
+                    while end_hour < 23 and heatmap_data.loc[peak_day, end_hour + 1] >= threshold:
+                        end_hour += 1
+
+                    # Calcular el valor total acumulado en ese bloque
+                    block_sum = heatmap_data.loc[peak_day, start_hour:end_hour].sum()
+
+                    if start_hour == end_hour:
+                        # Solo una hora pico
+                        st.success(f"🚀 **Hora Pico de Productividad:** {peak_day} a las {start_hour:02d}:00 ({block_sum:.1f} {label_val})")
+                    else:
+                        # Un bloque de varias horas (se muestra hasta el inicio de la siguiente hora)
+                        st.success(f"🚀 **Bloque Pico de Productividad:** {peak_day} de {start_hour:02d}:00 hasta {end_hour+1:02d}:00 ({block_sum:.1f} {label_val})")
+
+                # --- Ajuste de escala Dinámica ---
+                # Eliminamos el percentil 95 para evitar saturación y usamos el máximo real
+                z_max_val = heatmap_data.max().max()
+                if z_max_val == 0:
+                    z_max_val = 1
+
+                fig_heatmap = px.imshow(
+                    heatmap_data,
+                    labels=dict(x="Hora del Día", y="Día de la Semana", color=label_val.capitalize()),
+                    x=heatmap_data.columns,
+                    y=heatmap_data.index,
+                    color_continuous_scale=[[0, '#1E293B'], [0.5, '#065F46'], [1, '#00FFA3']],
+                    zmax=z_max_val,
+                    title=f"<b>Mapa de Calor de Productividad</b> ({metric_choice})",
+                    template="plotly_dark"
+                )
+
+                # Configuración específica de la barra de colores según la métrica
+                if metric_choice == "Cantidad de Tareas":
+                    # Forzamos ticks enteros para tareas dentro de colorbar
+                    tick_vals = list(range(int(z_max_val) + 1))
+                    fig_heatmap.update_layout(coloraxis=dict(colorbar=dict(tickvals=tick_vals)))
+                elif metric_choice == "Carga Mental (Dificultad × Horas)":
+                    # Para carga mental, usamos tickformat dentro de colorbar
+                    fig_heatmap.update_layout(coloraxis=dict(colorbar=dict(tickformat=".1f")))
+                else: # Volumen de Horas
+                    fig_heatmap.update_layout(coloraxis=dict(colorbar=dict(tickformat=".1f")))
+
+                fig_heatmap.update_traces(xgap=3, ygap=3)
+                fig_heatmap.update_layout(
+                    xaxis=dict(tickmode='linear', tick0=0, dtick=2, showgrid=False),
+                    yaxis=dict(showgrid=False),
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    font_color="#CBD5E1",
+                    xaxis_title="Hora (0-23h)",
+                    yaxis_title=""
+                )
+
+                st.plotly_chart(fig_heatmap, use_container_width=True)
+                st.caption(f"💡 Las celdas más brillantes indican el mayor {label_val} ({metric_choice}). La escala se ajusta automáticamente al valor máximo real.")
 
     with tab_historial:
         st.subheader("Registro de Bloques de Trabajo")
