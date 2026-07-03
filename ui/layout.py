@@ -347,7 +347,10 @@ def render_dashboard(proyecto_seleccionado):
         if len(df_filtrado) == 0:
             st.info("No hay tareas registradas.")
         else:
-            df_vista_cliente = df_filtrado[['task_id', 'timestamp', 'project', 'module_task', 'real_hours', 'status']].rename(
+            df_vista_cliente = df_filtrado[['task_id', 'timestamp', 'project', 'module_task', 'real_hours', 'status']].copy()
+            # Formatear timestamp para visualización limpia (YYYY-MM-DD HH:MM:SS)
+            df_vista_cliente['timestamp'] = pd.to_datetime(df_vista_cliente['timestamp']).dt.strftime('%Y-%m-%d %H:%M:%S')
+            df_vista_cliente = df_vista_cliente.rename(
                 columns={'task_id': 'ID', 'timestamp': 'Fecha', 'project': 'Proyecto', 'module_task': 'Módulo / Tarea', 'real_hours': 'Duración (Horas)', 'status': 'Resultado'}
             )
             st.dataframe(df_vista_cliente, use_container_width=True, hide_index=True)

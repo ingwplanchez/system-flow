@@ -7,6 +7,11 @@ def procesar_datos_etl(df):
     df_clean = df_clean[[col for col in columnas_estrictas if col in df_clean.columns]]
     columnas_criticas = ['timestamp', 'task_id', 'project', 'category', 'status']
     df_clean = df_clean.dropna(subset=[col for col in columnas_criticas if col in df_clean.columns])
+
+    # Normalización de Formato de Fecha (ISO 8601: YYYY-MM-DD HH:MM:SS)
+    if 'timestamp' in df_clean.columns:
+        df_clean['timestamp'] = pd.to_datetime(df_clean['timestamp']).dt.strftime('%Y-%m-%d %H:%M:%S')
+
     for col in ['category', 'priority', 'status']:
         if col in df_clean.columns:
             df_clean[col] = df_clean[col].astype(str).str.lower().str.strip()
