@@ -79,7 +79,7 @@ El desarrollo está dividido en sprints técnicos para asegurar la escalabilidad
     - **Focus Score**: Cálculo basado en la precisión de estimación (Diferencia entre `est_hours` y `real_hours`).
     - **Ciclos Completados**: Conteo de tareas `completed` del día actual frente a una meta configurable en el Sidebar.
     - **Tiempo Total**: Suma de `real_hours` del proyecto, con indicador de progreso diario.
-    - **Eficiencia Promedio**: Ratio de rendimiento ($\frac{\sum \text{est\_hours}}{\sum \text{real\_hours}}$) capado al 120%.
+    - **Eficiencia Promedio**: Ratio de rendimiento ($\frac{\sum \text{est\\_hours}}{\sum \text{real\\_hours}}$) capado al 120%.
 - **Configuraciones de Usuario**:
     - **Meta Diaria**: Control ajustable en la interfaz para definir el objetivo de bloques diarios (predeterminado: 4 bloques).
 
